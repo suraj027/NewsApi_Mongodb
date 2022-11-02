@@ -1,6 +1,8 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 require('dotenv').config();
+const mongoose = require("mongoose");
+
 
 const app = express();
 const port = process.env.PORT || 5001
@@ -19,9 +21,11 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 // Routes
 const newsRouter = require('./src/routes/news')
-
 app.use('/', newsRouter)
 app.use('/article', newsRouter)
+
+//connect to db
+mongoose.connect(process.env.DATABASE_URL,{useNewUrlParser: true, useUnifiedTopology:true}, ()=> console.log("Connected to DB"))
 
 // Listen on port 5000
 app.listen(port, () => console.log(`Listening on port ${port}`))
