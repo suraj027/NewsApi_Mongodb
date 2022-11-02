@@ -3,14 +3,18 @@ const mongoose = require("mongoose");
 //db tables 
 
 const newsSchema = mongoose.Schema({
-    firstname : {
+    name : {
         type : String,
         require : true
     },
-    mail : {
+    email : {
+        type : String,
+        require : true
+    },
+    password : {
         type : String,
         require : true
     }
 });
 
-module.exports = mongoose.model("Posts", newsSchema);
+module.exports = mongoose.model("news_mongoose", newsSchema);

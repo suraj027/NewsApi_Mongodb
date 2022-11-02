@@ -3,6 +3,13 @@ const newsRouter = express.Router()
 const axios = require('axios')
 require('dotenv').config()
 
+
+newsRouter.get('/register',function(req,res){
+    res.render('register',{
+        name:name
+    })
+})
+
 newsRouter.get('/', async (req, res) => {
     try {
          var url = `http://newsapi.org/v2/top-headlines?country=in&apiKey=${process.env.TOKEN}`;

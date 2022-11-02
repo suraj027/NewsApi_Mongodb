@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 require('dotenv').config();
 const mongoose = require("mongoose");
 
+const news_mongoose = require('./src/models/news_mongoose')
 
 const app = express();
 const port = process.env.PORT || 5001
