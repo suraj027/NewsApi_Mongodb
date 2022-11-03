@@ -31,29 +31,53 @@ newsRouter.get('/', async (req, res) => {
 
 //register
 
-newsRouter.get("/register", function (req, res) {
-    res.render("register");
+// newsRouter.get("/register", function (req, res) {
+//     res.render("register");
+// });
+
+// newsRouter.post('/register', function(req,res){
+//     var name = req.body.name;
+//     var email =req.body.email;
+//     var password = req.body.password;
+    
+//     var data = {
+//         "name": name,
+//         "email":email,
+//         "password":password
+//     }
+
+mongoose.connect('mongodb+srv://raj100shah1:rajshah00@newsdb.5czx041.mongodb.net/news_app');
+
+const itemsSchema = {
+    name:String,
+    email:String,
+    pass:String
+};
+
+const Item = mongoose.model('Item',itemsSchema);
+
+const item1 = new Item({
+    name:"raj100shah1",
+    email:"raj@gmail.com",
+    pass:"rajshah00"
 });
 
-newsRouter.post('/register', function(req,res){
-    var name = req.body.name;
-    var email =req.body.email;
-    var password = req.body.password;
-    
-    var data = {
-        "name": name,
-        "email":email,
-        "password":password
-    }
-db.products('details').insertOne(data,function(err){
-        if (err) throw err;
-        console.log("Record inserted Successfully");
-              
-    });
-          
-    return res.redirect('news');
-})
+const item2 = new Item({
+    name:"rajz",
+    email:"raj777@gmail.com",
+    pass:"rajshah00"
+});
 
+
+const defaultItems = [item1,item2];
+
+Item.insertMany(defaultItems,function(err){
+    if (err){
+        console.log(err)
+    }else{
+        console.log("success db saved")
+    }
+});
 
 //api fetch
 newsRouter.get('/entertainment', async(req, res) => {
