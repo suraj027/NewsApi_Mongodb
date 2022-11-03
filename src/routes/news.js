@@ -2,13 +2,10 @@ const express = require('express')
 const newsRouter = express.Router()
 const axios = require('axios')
 require('dotenv').config()
+const mongoose = require('mongoose')
+const { db } = require('mongodb')
+const { DB } = require('../models/news_mongoose')
 
-
-newsRouter.get('/register',function(req,res){
-    res.render('register',{
-        name:name
-    })
-})
 
 newsRouter.get('/', async (req, res) => {
     try {
@@ -32,6 +29,33 @@ newsRouter.get('/', async (req, res) => {
     }
 })
 
+//register
+
+newsRouter.get("/register", function (req, res) {
+    res.render("register");
+});
+
+newsRouter.post('/register', function(req,res){
+    var name = req.body.name;
+    var email =req.body.email;
+    var password = req.body.password;
+    
+    var data = {
+        "name": name,
+        "email":email,
+        "password":password
+    }
+db.products('details').insertOne(data,function(err){
+        if (err) throw err;
+        console.log("Record inserted Successfully");
+              
+    });
+          
+    return res.redirect('news');
+})
+
+
+//api fetch
 newsRouter.get('/entertainment', async(req, res) => {
     try {
         
