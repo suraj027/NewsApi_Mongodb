@@ -1,12 +1,183 @@
 const express = require('express')
 const newsRouter = express.Router()
+
 const axios = require('axios')
 require('dotenv').config()
 const mongoose = require('mongoose')
 const { db } = require('mongodb')
 const { DB } = require('../models/news_mongoose')
 
+//login from github code
+const generateUniqueId = require('generate-unique-id');
 
+var User = require('../models/user');
+newsRouter.get('/', function (req, res, next) {
+	return res.render('index.ejs');
+});
+
+//Default-Route (First Page of localhost)
+newsRouter.post('/', function(req, res, next) {
+	console.log(req.body);
+	var personInfo = req.body;
+
+
+	if(!personInfo.email || !personInfo.username || !personInfo.password || !personInfo.passwordConf){
+		res.send();
+	} else {
+		if (personInfo.password == personInfo.passwordConf) {
+			User.findOne({email:personInfo.email},function(err,data){
+				if(!data){
+					var c;
+					User.findOne({},function(err,data){
+
+						if (data) {
+							console.log(data);
+                            c  = generateUniqueId({
+                                length: 10,
+                                useLetters: false,
+                                useNumbers: true
+                              });
+						}else{
+							c=1;
+						}
+
+                        //Inserts into MongoDB Database
+						var newPerson = new User({
+							unique_id:c,
+							email:personInfo.email,
+							username: personInfo.username,
+							password: personInfo.password,
+							passwordConf: personInfo.passwordConf
+						});
+                      
+
+						newPerson.save(function(err, Person){
+							if(err)
+								console.log(err);
+							else
+								console.log('Success');
+						});
+
+					}).sort({_id: -1}).limit(1);
+					res.send({"Success":"You are registered,You can login now."});
+				}else{
+					res.send({"Success":"Email is already used."});
+				}
+
+			});
+		}else{
+			res.send({"Success":"password is not matched"});
+		}
+	}
+});
+
+newsRouter.get('/login', function (req, res, next) {
+	return res.render('login.ejs');
+});
+
+//Login-Route (Second Page of localhost)
+newsRouter.post('/login', function (req, res, next) {
+	//console.log(req.body);
+	User.findOne({email:req.body.email},function(err,data){
+		if(data){
+			
+			if(data.password==req.body.password){
+				//console.log("Done Login");
+				req.session.userId = data.unique_id;
+				//console.log(req.session.userId);
+				res.send({"Success":"Success!"});
+				
+			}else{
+				res.send({"Success":"Wrong password!"});
+			}
+		}else{
+			res.send({"Success":"This Email Is not regestered!"});
+		}
+	});
+});
+
+newsRouter.get('/news-page', function (req, res, next) {
+	console.log("profile");
+	User.findOne({unique_id:req.session.userId},async function(err,data){
+		console.log("data");
+		console.log(data);
+		if(!data){
+			res.redirect('/');
+		}else{
+			//console.log("found");
+			//return res.render('data.ejs', {"name":data.username,"email":data.email});
+            try {
+                var url = `http://newsapi.org/v2/top-headlines?country=in&apiKey=${process.env.TOKEN}`;
+               const newsAPI = await axios.get(url)
+               // const newsAPI = await axios.get(`https://raddy.dev/wp-json/wp/v2/posts/`)
+               res.render('news', {articles: newsAPI.data.articles, name:data.username, email:data.email})
+           } catch (err) {
+               if (err.response) {
+                   res.render('news', { articles: null })
+                   console.log(err.response.data)
+                   console.log(err.response.status)
+                   console.log(err.response.headers)
+               } else if (err.request) {
+                   res.render('news', { articles: null })
+                   console.log(err.request)
+               } else {
+                   res.render('news', { articles: null })
+                   console.error('Error', err.message)
+               }
+           }
+		}
+	});
+});
+
+newsRouter.get('/logout', function (req, res, next) {
+	console.log("logout")
+	if (req.session) {
+    // delete session object
+    req.session.destroy(function (err) {
+    	if (err) {
+    		return next(err);
+    	} else {
+    		return res.redirect('/');
+    	}
+    });
+}
+});
+
+newsRouter.get('/forgetpass', function (req, res, next) {
+	res.render("forget.ejs");
+});
+
+newsRouter.post('/forgetpass', function (req, res, next) {
+	//console.log('req.body');
+	//console.log(req.body);
+	User.findOne({email:req.body.email},function(err,data){
+		console.log(data);
+		if(!data){
+			res.send({"Success":"This Email Is not regestered!"});
+		}else{
+			// res.send({"Success":"Success!"});
+			if (req.body.password==req.body.passwordConf) {
+			data.password=req.body.password;
+			data.passwordConf=req.body.passwordConf;
+
+			data.save(function(err, Person){
+				if(err)
+					console.log(err);
+				else
+					console.log('Success');
+					res.send({"Success":"Password changed!"});
+			});
+		}else{
+			res.send({"Success":"Password does not matched! Both Password should be same."});
+		}
+		}
+	});
+	
+});
+
+//
+
+/*
 newsRouter.get('/', async (req, res) => {
     try {
          var url = `http://newsapi.org/v2/top-headlines?country=in&apiKey=${process.env.TOKEN}`;
@@ -21,63 +192,22 @@ newsRouter.get('/', async (req, res) => {
             console.log(err.response.headers)
         } else if (err.request) {
             res.render('news', { articles: null })
-            console.log(err.requiest)
+            console.log(err.request)
         } else {
             res.render('news', { articles: null })
             console.error('Error', err.message)
         }
     }
 })
-
-//register
-
-// newsRouter.get("/register", function (req, res) {
-//     res.render("register");
-// });
-
-// newsRouter.post('/register', function(req,res){
-//     var name = req.body.name;
-//     var email =req.body.email;
-//     var password = req.body.password;
-    
-//     var data = {
-//         "name": name,
-//         "email":email,
-//         "password":password
-//     }
-
-mongoose.connect('mongodb+srv://raj100shah1:rajshah00@newsdb.5czx041.mongodb.net/news_app');
-
-const itemsSchema = {
-    name:String,
-    email:String,
-    pass:String
-};
-
-const Item = mongoose.model('Item',itemsSchema);
-
-const item1 = new Item({
-    name:"raj100shah1",
-    email:"raj@gmail.com",
-    pass:"rajshah00"
-});
-
-const item2 = new Item({
-    name:"rajz",
-    email:"raj777@gmail.com",
-    pass:"rajshah00"
-});
+*/
 
 
-const defaultItems = [item1,item2];
+ 
 
-Item.insertMany(defaultItems,function(err){
-    if (err){
-        console.log(err)
-    }else{
-        console.log("success db saved")
-    }
-});
+
+
+
+
 
 //api fetch
 newsRouter.get('/entertainment', async(req, res) => {
@@ -189,9 +319,9 @@ newsRouter.get('/:id', async (req, res) => {
             console.log(err.response.data)
             console.log(err.response.status)
             console.log(err.response.headers)
-        } else if (err.requiest) {
+        } else if (err.request) {
             res.render('newsSingle', { article: null })
-            console.log(err.requiest)
+            console.log(err.request)
         } else {
             res.render('newsSingle', { article: null })
             console.error('Error', err.message)
@@ -216,9 +346,9 @@ newsRouter.post('', async (req, res) => {
             console.log(err.response.data)
             console.log(err.response.status)
             console.log(err.response.headers)
-        } else if (err.requiest) {
+        } else if (err.request) {
             res.render('newsSearch', { articles: null })
-            console.log(err.requiest)
+            console.log(err.request)
         } else {
             res.render('newsSearch', { articles: null })
             console.error('Error', err.message)
@@ -228,6 +358,5 @@ newsRouter.post('', async (req, res) => {
 
 })
 
-
-
 module.exports = newsRouter 
+
