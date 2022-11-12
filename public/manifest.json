@@ -1,7 +1,7 @@
 {
-    "name": "Progressive Web App - Demo",
-    "short_name": "PWADemo",
-    "description": "Progressive Web Apps - demo application",
+    "name": "NewsRoom",
+    "short_name": "NewsRoom",
+    "description": "NewsRoom Application",
     "start_url": "/src/views/index.ejs",
     "display": "standalone",
     "background_color": "#4c4849",
